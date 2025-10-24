@@ -15,6 +15,10 @@ spring:
     - dev
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin, RETAIN_UNIQUE
       globalcors:
@@ -61,6 +65,12 @@ spring:
         uri: lb://PROXY-CLIENT
         predicates:
         - Path=/app/**
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://service-discovery-container:8761/eureka/
 
 resilience4j:
   circuitbreaker:
