@@ -1,0 +1,34 @@
+services:
+  cloud-config-container:
+    ports: []
+
+  service-discovery-container:
+    ports: []
+
+  zipkin:
+    ports: []
+
+  api-gateway-container:
+    ports:
+      - "${API_GATEWAY_HOST_PORT:-18080}:8080"
+
+  proxy-client-container:
+    ports: []
+
+  order-service-container:
+    ports: []
+
+  payment-service-container:
+    ports: []
+
+  product-service-container:
+    ports: []
+
+  shipping-service-container:
+    ports: []
+
+  user-service-container:
+    ports: []
+
+  favourite-service-container:
+    ports: []

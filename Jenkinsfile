@@ -4,7 +4,8 @@ pipeline {
     environment {
         MAVEN_OPTS = '-Xmx512m -XX:+UseG1GC'
         DOCKER_COMPOSE = 'docker compose --project-name ecommerce-ci'
-        COMPOSE_FILES = '-f core.yml -f compose.yml'
+        COMPOSE_FILES = '-f core.yml -f compose.yml -f compose.ci.yml'
+        CI_GATEWAY_PORT = '18080'
     }
 
     parameters {
@@ -53,8 +54,8 @@ pipeline {
             }
             steps {
                 script {
-                    sh "docker compose -f core.yml -f compose.yml down --remove-orphans || true"
-                    sh "docker compose -f core.yml -f compose.yml up -d --remove-orphans"
+                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
+                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} up -d --remove-orphans"
                 }
             }
         }
@@ -64,12 +65,14 @@ pipeline {
                 expression { env.BRANCH_NAME?.startsWith('stage/') }
             }
             steps {
-                sh '''
+                withEnv(["API_GATEWAY_BASE_URL=http://localhost:${CI_GATEWAY_PORT}"]) {
+                    sh '''
                     python -m pip install --upgrade pip
                     python -m pip install pytest requests locust
                     mkdir -p build/reports
                     pytest -m e2e tests/e2e --junitxml=build/reports/e2e-results.xml --maxfail=1
-                '''
+                    '''
+                }
             }
             post {
                 always {
@@ -83,7 +86,7 @@ pipeline {
         always {
             script {
                 if (env.BRANCH_NAME?.startsWith('stage/')) {
-                    sh 'docker compose -f core.yml -f compose.yml down --remove-orphans || true'
+                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
                 }
             }
         }
