@@ -26,8 +26,11 @@ pipeline {
 
         stage('Build microservice') {
             steps {
-                dir(params.MICROSERVICE) {
-                    sh 'mvn -B clean package -Dmaven.test.skip=true'
+                script {
+                    def mainClass = "com.selimhorri.app.${params.MICROSERVICE.split('-').collect { it.capitalize() }.join('')}Application"
+                    dir(params.MICROSERVICE) {
+                        sh "mvn -B clean package -Dmaven.test.skip=true -Dspring-boot.repackage.mainClass=${mainClass}"
+                    }
                 }
             }
         }
