@@ -1,15 +1,12 @@
 services:
   cloud-config-container:
-    ports:
-      - "${CI_CLOUD_CONFIG_PORT:-19296}:9296"
+    ports: []
 
   service-discovery-container:
-    ports:
-      - "${CI_SERVICE_DISCOVERY_PORT:-18761}:8761"
+    ports: []
 
   zipkin:
-    ports:
-      - "${CI_ZIPKIN_PORT:-19411}:9411"
+    ports: []
 
   api-gateway-container:
     ports:

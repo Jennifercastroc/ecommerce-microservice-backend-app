@@ -6,9 +6,6 @@ pipeline {
         DOCKER_COMPOSE = 'docker compose --project-name ecommerce-ci'
         COMPOSE_FILES = '-f core.yml -f compose.yml -f compose.ci.yml'
         CI_GATEWAY_PORT = '18080'
-        CI_CLOUD_CONFIG_PORT = '19296'
-        CI_SERVICE_DISCOVERY_PORT = '18761'
-        CI_ZIPKIN_PORT = '19411'
     }
 
     parameters {
