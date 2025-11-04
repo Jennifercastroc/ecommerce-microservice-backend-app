@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.selimhorri.app.constant.AppConstant;
@@ -36,13 +37,7 @@ public class OrderItemServiceImpl implements OrderItemService {
 		return this.orderItemRepository.findAll()
 				.stream()
 					.map(OrderItemMappingHelper::map)
-					.map(o -> {
-						o.setProductDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-								.PRODUCT_SERVICE_API_URL + "/" + o.getProductDto().getProductId(), ProductDto.class));
-						o.setOrderDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-								.ORDER_SERVICE_API_URL + "/" + o.getOrderDto().getOrderId(), OrderDto.class));
-						return o;
-					})
+					.map(this::enrichAggregateData)
 					.distinct()
 					.collect(Collectors.toUnmodifiableList());
 	}
@@ -50,15 +45,9 @@ public class OrderItemServiceImpl implements OrderItemService {
 	@Override
 	public OrderItemDto findById(final OrderItemId orderItemId) {
 		log.info("*** OrderItemDto, service; fetch orderItem by id *");
-		return this.orderItemRepository.findById(null)
+		return this.orderItemRepository.findById(orderItemId)
 				.map(OrderItemMappingHelper::map)
-				.map(o -> {
-					o.setProductDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-							.PRODUCT_SERVICE_API_URL + "/" + o.getProductDto().getProductId(), ProductDto.class));
-					o.setOrderDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-							.ORDER_SERVICE_API_URL + "/" + o.getOrderDto().getOrderId(), OrderDto.class));
-					return o;
-				})
+				.map(this::enrichAggregateData)
 				.orElseThrow(() -> new OrderItemNotFoundException(String.format("OrderItem with id: %s not found", orderItemId)));
 	}
 	
@@ -80,6 +69,26 @@ public class OrderItemServiceImpl implements OrderItemService {
 	public void deleteById(final OrderItemId orderItemId) {
 		log.info("*** Void, service; delete orderItem by id *");
 		this.orderItemRepository.deleteById(orderItemId);
+	}
+
+	private OrderItemDto enrichAggregateData(final OrderItemDto dto) {
+		try {
+			dto.setProductDto(this.restTemplate.getForObject(
+					AppConstant.DiscoveredDomainsApi.PRODUCT_SERVICE_API_URL + "/" + dto.getProductDto().getProductId(),
+					ProductDto.class));
+		}
+		catch (RestClientException ex) {
+			log.warn("Could not hydrate product {} for order {}: {}", dto.getProductDto().getProductId(), dto.getOrderId(), ex.getMessage());
+		}
+		try {
+			dto.setOrderDto(this.restTemplate.getForObject(
+					AppConstant.DiscoveredDomainsApi.ORDER_SERVICE_API_URL + "/" + dto.getOrderDto().getOrderId(),
+					OrderDto.class));
+		}
+		catch (RestClientException ex) {
+			log.warn("Could not hydrate order {}: {}", dto.getOrderDto().getOrderId(), ex.getMessage());
+		}
+		return dto;
 	}
 	
 	

@@ -41,7 +41,7 @@ public class OrderItemResource {
 			@PathVariable("productId") final String productId) {
 		log.info("*** OrderItemDto, resource; fetch orderItem by id *");
 		return ResponseEntity.ok(this.orderItemService.findById(
-				new OrderItemId(Integer.parseInt(orderId), Integer.parseInt(productId))));
+				new OrderItemId(Integer.parseInt(productId), Integer.parseInt(orderId))));
 	}
 	
 	@GetMapping("/find")
@@ -76,7 +76,7 @@ public class OrderItemResource {
 			@PathVariable("orderId") final String orderId, 
 			@PathVariable("productId") final String productId) {
 		log.info("*** Boolean, resource; delete orderItem by id *");
-		this.orderItemService.deleteById(new OrderItemId(Integer.parseInt(orderId), Integer.parseInt(productId)));
+		this.orderItemService.deleteById(new OrderItemId(Integer.parseInt(productId), Integer.parseInt(orderId)));
 		return ResponseEntity.ok(true);
 	}
 	
