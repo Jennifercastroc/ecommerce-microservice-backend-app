@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         MAVEN_OPTS = '-Xmx512m -XX:+UseG1GC'
+        DOCKER_COMPOSE = 'docker compose --project-name ecommerce-ci'
+        COMPOSE_FILES = '-f core.yml -f compose.yml'
     }
 
     parameters {
@@ -50,7 +52,10 @@ pipeline {
                 expression { env.BRANCH_NAME?.startsWith('stage/') }
             }
             steps {
-                sh 'docker compose -f core.yml -f compose.yml up -d --remove-orphans'
+                script {
+                    sh "docker compose -f core.yml -f compose.yml down --remove-orphans || true"
+                    sh "docker compose -f core.yml -f compose.yml up -d --remove-orphans"
+                }
             }
         }
 
