@@ -24,13 +24,52 @@ pipeline {
             }
         }
 
+        stage('Setup tooling') {
+            steps {
+                sh '''
+                    set -euxo pipefail
+
+                    TOOLS_DIR="$HOME/.local/bin"
+                    mkdir -p "$TOOLS_DIR"
+                    if ! [ -x "$TOOLS_DIR/docker" ]; then
+                        DOCKER_VERSION="24.0.7"
+                        curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz" -o /tmp/docker.tgz
+                        tar -xzf /tmp/docker.tgz --strip-components=1 -C "$TOOLS_DIR" docker/docker
+                        rm -f /tmp/docker.tgz
+                    fi
+
+                    PLUGIN_DIR="$HOME/.docker/cli-plugins"
+                    mkdir -p "$PLUGIN_DIR"
+                    if ! [ -x "$PLUGIN_DIR/docker-compose" ]; then
+                        COMPOSE_VERSION="2.24.6"
+                        curl -fsSL "https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64" -o "$PLUGIN_DIR/docker-compose"
+                        chmod +x "$PLUGIN_DIR/docker-compose"
+                    fi
+
+                    if [ -f "./mvnw" ]; then
+                        chmod +x ./mvnw
+                    fi
+                '''
+            }
+        }
+
         stage('Build microservice') {
             steps {
                 script {
+                    def pathWithTools = "${env.HOME}/.local/bin:${env.PATH}"
                     def mainClass = "com.selimhorri.app.${params.MICROSERVICE.split('-').collect { it.capitalize() }.join('')}Application"
-                    dir(params.MICROSERVICE) {
-                        sh "mvn -B clean package -Dmaven.test.skip=true -Dspring-boot.repackage.mainClass=${mainClass}"
+
+                    withEnv(["PATH=${pathWithTools}"]) {
+                        dir(params.MICROSERVICE) {
+                            sh "./mvnw -B clean package -Dmaven.test.skip=true -Dspring-boot.repackage.mainClass=${mainClass}"
+                        }
                     }
+
+                    def imageName = "${params.DOCKER_REGISTRY}/${params.MICROSERVICE}-ecommerce-boot"
+                    def stageTag = env.BRANCH_NAME ? env.BRANCH_NAME.replaceAll('/', '-') : 'local'
+                    env.IMAGE_NAME = imageName
+                    env.IMAGE_BUILD_TAG = "${imageName}:${stageTag}-${env.BUILD_NUMBER}"
+                    env.IMAGE_RELEASE_TAG = "${imageName}:${params.PROJECT_VERSION}"
                 }
             }
         }
@@ -38,18 +77,12 @@ pipeline {
         stage('Docker build') {
             steps {
                 script {
-                    def imageName = "${params.DOCKER_REGISTRY}/${params.MICROSERVICE}-ecommerce-boot"
-                    def stageTag = env.BRANCH_NAME ? env.BRANCH_NAME.replaceAll('/', '-') : 'local'
-                    def buildTag = "${imageName}:${stageTag}-${env.BUILD_NUMBER}"
-                    def releaseTag = "${imageName}:${params.PROJECT_VERSION}"
-
-                    dir(params.MICROSERVICE) {
-                        sh "docker build -t ${buildTag} -t ${releaseTag} ."
+                    def pathWithTools = "${env.HOME}/.local/bin:${env.PATH}"
+                    withEnv(["PATH=${pathWithTools}"]) {
+                        dir(params.MICROSERVICE) {
+                            sh "docker build -t ${env.IMAGE_BUILD_TAG} -t ${env.IMAGE_RELEASE_TAG} ."
+                        }
                     }
-
-                    env.IMAGE_NAME = imageName
-                    env.IMAGE_BUILD_TAG = buildTag
-                    env.IMAGE_RELEASE_TAG = releaseTag
                 }
             }
         }
@@ -60,8 +93,11 @@ pipeline {
             }
             steps {
                 script {
-                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
-                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} up -d --remove-orphans"
+                    def pathWithTools = "${env.HOME}/.local/bin:${env.PATH}"
+                    withEnv(["PATH=${pathWithTools}"]) {
+                        sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
+                        sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} up -d --remove-orphans"
+                    }
                 }
             }
         }
@@ -71,12 +107,15 @@ pipeline {
                 expression { env.BRANCH_NAME?.startsWith('stage/') }
             }
             steps {
-                withEnv(["API_GATEWAY_BASE_URL=http://localhost:${CI_GATEWAY_PORT}"]) {
+                withEnv([
+                    "API_GATEWAY_BASE_URL=http://localhost:${CI_GATEWAY_PORT}",
+                    "PATH=${env.HOME}/.local/bin:${env.PATH}"
+                ]) {
                     sh '''
-                    python -m pip install --upgrade pip
-                    python -m pip install pytest requests locust
-                    mkdir -p build/reports
-                    pytest -m e2e tests/e2e --junitxml=build/reports/e2e-results.xml --maxfail=1
+                        python -m pip install --upgrade pip
+                        python -m pip install pytest requests locust
+                        mkdir -p build/reports
+                        pytest -m e2e tests/e2e --junitxml=build/reports/e2e-results.xml --maxfail=1
                     '''
                 }
             }
@@ -92,7 +131,10 @@ pipeline {
         always {
             script {
                 if (env.BRANCH_NAME?.startsWith('stage/')) {
-                    sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
+                    def pathWithTools = "${env.HOME}/.local/bin:${env.PATH}"
+                    withEnv(["PATH=${pathWithTools}"]) {
+                        sh "${DOCKER_COMPOSE} ${COMPOSE_FILES} down --remove-orphans || true"
+                    }
                 }
             }
         }
