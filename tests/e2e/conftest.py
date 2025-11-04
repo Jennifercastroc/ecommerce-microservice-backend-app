@@ -146,6 +146,18 @@ def gateway_session() -> requests.Session:
     session.close()
 
 
-@pytest.fixture
-def api_client(base_url: str, gateway_session: requests.Session) -> ApiGatewayClient:
+@pytest.fixture(scope="session")
+def session_client(base_url: str, gateway_session: requests.Session) -> ApiGatewayClient:
     return ApiGatewayClient(base_url=base_url, session=gateway_session)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def wait_for_core_services(session_client: ApiGatewayClient):
+    session_client.wait_for("get", "/product-service/api/products", timeout=180)
+    session_client.wait_for("get", "/product-service/api/categories", timeout=180)
+    session_client.wait_for("get", "/user-service/api/users", timeout=180)
+
+
+@pytest.fixture
+def api_client(session_client: ApiGatewayClient) -> ApiGatewayClient:
+    return session_client
