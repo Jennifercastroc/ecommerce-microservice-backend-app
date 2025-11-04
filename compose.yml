@@ -3,7 +3,7 @@ services:
   api-gateway-container:
     image: selimhorri/api-gateway-ecommerce-boot:0.1.0
     ports:
-      - 8080:8080
+      - "${CI_GATEWAY_PORT:-8080}:8080"
     networks:
       - microservices_network
     depends_on:

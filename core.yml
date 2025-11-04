@@ -3,14 +3,14 @@ services:
   zipkin:
     image: openzipkin/zipkin
     ports:
-      - 9411:9411
+      - "${CI_ZIPKIN_PORT:-9411}:9411"
     networks:
       - microservices_network
 
   service-discovery-container:
     image: selimhorri/service-discovery-ecommerce-boot:0.1.0
     ports:
-      - 8761:8761
+      - "${CI_SERVICE_DISCOVERY_PORT:-8761}:8761"
     networks:
       - microservices_network
     environment:
@@ -27,7 +27,7 @@ services:
   cloud-config-container:
     image: selimhorri/cloud-config-ecommerce-boot:0.1.0
     ports:
-      - 9296:9296
+      - "${CI_CLOUD_CONFIG_PORT:-9296}:9296"
     networks:
       - microservices_network
     environment:
