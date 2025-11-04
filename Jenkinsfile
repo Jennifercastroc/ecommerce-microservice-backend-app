@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        MAVEN_OPTS = '-Xmx512m -XX:+UseG1GC'
+    }
+
     parameters {
         string(name: 'MICROSERVICE', defaultValue: 'product-service', description: 'Nombre del modulo a construir (carpeta con pom y Dockerfile).')
         string(name: 'PROJECT_VERSION', defaultValue: '0.1.0', description: 'Version del artefacto utilizada en los Dockerfiles / docker-compose.')
@@ -17,7 +21,7 @@ pipeline {
         stage('Build microservice') {
             steps {
                 dir(params.MICROSERVICE) {
-                    sh 'mvn -B clean package -DskipTests'
+                    sh 'mvn -B clean package -Dmaven.test.skip=true'
                 }
             }
         }
