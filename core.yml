@@ -16,6 +16,13 @@ services:
     environment:
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296/
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat </dev/null >/dev/tcp/127.0.0.1/8761'"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
 
   cloud-config-container:
     image: selimhorri/cloud-config-ecommerce-boot:0.1.0
@@ -30,6 +37,13 @@ services:
       - EUREKA_CLIENT_AVAILABILITYZONES_DEFAULT=myzone
       - EUREKA_CLIENT_SERVICEURL_MYZONE=http://service-discovery-container:8761/eureka
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat </dev/null >/dev/tcp/127.0.0.1/9296'"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
 
 networks:
   microservices_network:

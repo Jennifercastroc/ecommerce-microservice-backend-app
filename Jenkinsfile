@@ -1,42 +1,42 @@
-pipeline {
+ï»¿pipeline {
     agent any
 
     options {
         timestamps()
-        ansiColor('xterm')
+        ansiColor(''xterm'')
     }
 
     parameters {
-        string(name: 'MICROSERVICE', defaultValue: 'product-service', description: 'Nombre del módulo a construir (carpeta con pom y Dockerfile).')
-        string(name: 'PROJECT_VERSION', defaultValue: '0.1.0', description: 'Versión del artefacto utilizada en los Dockerfiles / docker-compose.')
-        string(name: 'DOCKER_REGISTRY', defaultValue: 'selimhorri', description: 'Repositorio Docker donde etiquetar la imagen.')
+        string(name: ''MICROSERVICE'', defaultValue: ''product-service'', description: ''Nombre del modulo a construir (carpeta con pom y Dockerfile).'')
+        string(name: ''PROJECT_VERSION'', defaultValue: ''0.1.0'', description: ''Version del artefacto utilizada en los Dockerfiles / docker-compose.'')
+        string(name: ''DOCKER_REGISTRY'', defaultValue: ''selimhorri'', description: ''Repositorio Docker donde etiquetar la imagen.'')
     }
 
     stages {
-        stage('Checkout') {
+        stage(''Checkout'') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build microservice') {
+        stage(''Build microservice'') {
             steps {
                 dir(params.MICROSERVICE) {
-                    sh 'mvn -B clean package -DskipTests'
+                    sh ''mvn -B clean package -DskipTests''
                 }
             }
         }
 
-        stage('Docker build') {
+        stage(''Docker build'') {
             steps {
                 script {
-                    def imageName = "/-ecommerce-boot"
-                    def stageTag = env.BRANCH_NAME ? env.BRANCH_NAME.replaceAll('/', '-') : 'local'
-                    def buildTag = ":-"
-                    def releaseTag = ":"
+                    def imageName = "${params.DOCKER_REGISTRY}/${params.MICROSERVICE}-ecommerce-boot"
+                    def stageTag = env.BRANCH_NAME ? env.BRANCH_NAME.replaceAll(''/'', ''-'') : ''local''
+                    def buildTag = "${imageName}:${stageTag}-${env.BUILD_NUMBER}"
+                    def releaseTag = "${imageName}:${params.PROJECT_VERSION}"
 
                     dir(params.MICROSERVICE) {
-                        sh "docker build -t  -t  ."
+                        sh "docker build -t ${buildTag} -t ${releaseTag} ."
                     }
 
                     env.IMAGE_NAME = imageName
@@ -46,18 +46,18 @@ pipeline {
             }
         }
 
-        stage('Deploy stage stack') {
+        stage(''Deploy stage stack'') {
             when {
-                expression { env.BRANCH_NAME?.startsWith('stage/') }
+                expression { env.BRANCH_NAME?.startsWith(''stage/'') }
             }
             steps {
-                sh 'docker compose -f core.yml -f compose.yml up -d --remove-orphans'
+                sh ''docker compose -f core.yml -f compose.yml up -d --remove-orphans''
             }
         }
 
-        stage('E2E tests') {
+        stage(''E2E tests'') {
             when {
-                expression { env.BRANCH_NAME?.startsWith('stage/') }
+                expression { env.BRANCH_NAME?.startsWith(''stage/'') }
             }
             steps {
                 sh '''
@@ -69,7 +69,7 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'build/reports/e2e-results.xml'
+                    junit allowEmptyResults: true, testResults: ''build/reports/e2e-results.xml''
                 }
             }
         }
@@ -78,8 +78,8 @@ pipeline {
     post {
         always {
             script {
-                if (env.BRANCH_NAME?.startsWith('stage/')) {
-                    sh 'docker compose -f core.yml -f compose.yml down --remove-orphans || true'
+                if (env.BRANCH_NAME?.startsWith(''stage/'')) {
+                    sh ''docker compose -f core.yml -f compose.yml down --remove-orphans || true''
                 }
             }
         }

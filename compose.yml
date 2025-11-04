@@ -6,6 +6,12 @@ services:
       - 8080:8080
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
@@ -22,6 +28,12 @@ services:
       - 8900:8900
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
@@ -38,6 +50,12 @@ services:
       - 8300:8300
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
@@ -54,6 +72,12 @@ services:
       - 8400:8400
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
@@ -70,6 +94,12 @@ services:
       - 8500:8500
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_REGION=default
@@ -86,6 +116,12 @@ services:
       - microservices_network
     ports:
       - 8600:8600
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296/
@@ -102,6 +138,12 @@ services:
       - 8700:8700
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
@@ -118,6 +160,12 @@ services:
       - 8800:8800
     networks:
       - microservices_network
+    depends_on:
+      cloud-config-container:
+        condition: service_healthy
+      service-discovery-container:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE-URL=http://zipkin:9411
