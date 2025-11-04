@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-    }
-
     parameters {
         string(name: 'MICROSERVICE', defaultValue: 'product-service', description: 'Nombre del modulo a construir (carpeta con pom y Dockerfile).')
         string(name: 'PROJECT_VERSION', defaultValue: '0.1.0', description: 'Version del artefacto utilizada en los Dockerfiles / docker-compose.')
