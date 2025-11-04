@@ -1,16 +1,19 @@
 services:
   cloud-config-container:
-    ports: []
+    ports:
+      - "127.0.0.1:${CI_CLOUD_CONFIG_PORT:-19296}:9296"
 
   service-discovery-container:
-    ports: []
+    ports:
+      - "127.0.0.1:${CI_SERVICE_DISCOVERY_PORT:-18761}:8761"
 
   zipkin:
-    ports: []
+    ports:
+      - "127.0.0.1:${CI_ZIPKIN_PORT:-19411}:9411"
 
   api-gateway-container:
     ports:
-      - "${API_GATEWAY_HOST_PORT:-18080}:8080"
+      - "127.0.0.1:${API_GATEWAY_HOST_PORT:-18080}:8080"
 
   proxy-client-container:
     ports: []
